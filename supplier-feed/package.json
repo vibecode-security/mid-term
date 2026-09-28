@@ -1,0 +1,12 @@
+{
+  "name": "supplier-feed",
+  "version": "2.1.0",
+  "description": "BrewCart Supplier Feed Internal Microservice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

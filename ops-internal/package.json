@@ -1,0 +1,12 @@
+{
+  "name": "ops-internal",
+  "version": "1.4.2",
+  "description": "BrewCart Ops Console Internal Microservice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

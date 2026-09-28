@@ -1,0 +1,68 @@
+services:
+  # Service 1: Cơ sở dữ liệu MySQL / MariaDB chứa dữ liệu sản phẩm, tài khoản, đơn hàng
+  mysql:
+    image: mariadb:10.11
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_brewcart_pass
+      MYSQL_DATABASE: brewcart
+      MYSQL_USER: brewcart_user
+      MYSQL_PASSWORD: brewcart_secret_db_2026
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - lab-net
+    restart: unless-stopped
+
+  # Service 2: Microservice nội bộ Ops Console (Chứa endpoint /env và topology nội bộ)
+  ops-internal:
+    build:
+      context: ./ops-internal
+      dockerfile: Dockerfile
+    container_name: ops-internal
+    expose:
+      - "8081"
+    networks:
+      - lab-net
+    restart: unless-stopped
+
+  # Service 3: Microservice nội bộ Nhà cung cấp (Chứa endpoint /catalog và /internal/keys)
+  supplier-feed:
+    build:
+      context: ./supplier-feed
+      dockerfile: Dockerfile
+    container_name: supplier-feed
+    expose:
+      - "8082"
+    networks:
+      - lab-net
+    restart: unless-stopped
+
+  # Service 4: Ứng dụng BrewCart E-Commerce (Có lỗ hổng SSRF tại /api/admin/products/:id/fetch-image)
+  vulnerable-app:
+    build:
+      context: ./vulnerable-ipx
+      dockerfile: Dockerfile
+    container_name: vulnerable-app
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=brewcart_user
+      - DB_PASSWORD=brewcart_secret_db_2026
+      - DB_NAME=brewcart
+    depends_on:
+      - mysql
+      - ops-internal
+      - supplier-feed
+    networks:
+      - lab-net
+    volumes:
+      - ./vulnerable-ipx/server.js:/app/server.js
+      - ./vulnerable-ipx/public:/app/public
+      - ./vulnerable-ipx/uploads:/app/uploads
+    restart: unless-stopped
+
+networks:
+  lab-net:
+    driver: bridge

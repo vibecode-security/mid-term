@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrewCart — Cà phê rang mộc</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --coffee-900: #451A03;
+            --coffee-800: #78350F;
+            --coffee-700: #92400E;
+            --gold-400: #FBBF24;
+            --gold-500: #E8A317;
+            --cream-100: #FEF3C7;
+            --cream-50: #FFFBEB;
+            --paper: #FFFFFF;
+            --ink-900: #171717;
+            --slate-600: #475569;
+            --line-200: #E7E2D8;
+            --danger: #B91C1C;
+            --ok: #15803D;
+            --shadow: 0 1px 2px rgba(69, 26, 3, .04), 0 8px 24px rgba(69, 26, 3, .06);
+            --radius: 14px;
+            --maxw: 1120px;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: 'Nunito', system-ui, sans-serif;
+            color: var(--ink-900);
+            background: var(--cream-50);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-wrap: break-word;
+        }
+        h1, h2, h3, h4 {
+            overflow-wrap: anywhere;
+            font-family: 'Nunito', system-ui, sans-serif;
+            letter-spacing: -.03em;
+            line-height: 1.1;
+            color: var(--coffee-900);
+            margin: 0 0 .4em;
+        }
+        a { color: var(--coffee-800); text-decoration: none; cursor: pointer; }
+        a:hover { color: var(--coffee-700); }
+        img { max-width: 100%; display: block; }
+        .container { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+        .row { display: flex; gap: 12px; align-items: center; }
+        .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .muted { color: var(--slate-600); }
+        .small { font-size: .875rem; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            font: 600 .95rem 'Nunito', sans-serif;
+            border: 1px solid var(--coffee-800);
+            background: var(--coffee-800);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            transition: background .2s, color .2s, border-color .2s;
+            text-align: center;
+        }
+        .btn:hover { background: var(--coffee-900); color: #fff; }
+        .btn:focus-visible { outline: 3px solid var(--gold-400); outline-offset: 2px; }
+        .btn.cta { background: var(--gold-400); border-color: var(--gold-400); color: var(--coffee-900); }
+        .btn.cta:hover { background: var(--gold-500); border-color: var(--gold-500); color: var(--coffee-900); }
+        .btn.ghost { background: transparent; color: var(--coffee-800); }
+        .btn.ghost:hover { background: var(--cream-100); color: var(--coffee-900); }
+        .btn.sm { padding: 5px 12px; font-size: .82rem; }
+        .btn[disabled] { opacity: .55; cursor: not-allowed; }
+        .btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+        .btn.danger:hover { background: #fef2f2; }
+
+        label { display: block; font: 600 .85rem 'Nunito', sans-serif; color: var(--coffee-900); margin: 0 0 6px; }
+        input, select, textarea {
+            width: 100%;
+            font: 400 .95rem 'Nunito', sans-serif;
+            color: var(--ink-900);
+            background: var(--paper);
+            border: 1px solid var(--line-200);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--coffee-700);
+            box-shadow: 0 0 0 3px #78350f1f;
+        }
+        .field { margin-bottom: 14px; }
+        textarea { min-height: 96px; resize: vertical; }
+
+        .card {
+            background: var(--paper);
+            border: 1px solid var(--line-200);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .card.pad { padding: 20px; overflow-x: auto; }
+        .card.pad > table { white-space: nowrap; }
+        .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+        .product { overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .product:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(69,26,3,.08); }
+        .product .thumb {
+            aspect-ratio: 4/3;
+            background: var(--cream-100);
+            display: grid;
+            place-items: center;
+            color: var(--coffee-700);
+            font: 700 1.4rem 'Nunito';
+            overflow: hidden;
+        }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .prod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 12px; align-items: start; }
+        @media (max-width: 760px) { .prod-grid { grid-template-columns: 1fr; } }
+
+        .qty {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--line-200);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--paper);
+        }
+        .qty button {
+            width: 40px;
+            height: 40px;
+            border: 0;
+            background: var(--cream-100);
+            color: var(--coffee-900);
+            font: 700 1.15rem 'Nunito', sans-serif;
+            cursor: pointer;
+            transition: background .2s;
+        }
+        .qty button:hover { background: var(--gold-400); }
+        .qty button[disabled] { opacity: .4; cursor: not-allowed; }
+        .qty input { width: 52px; text-align: center; border: 0; border-radius: 0; padding: 9px 0; }
+        .qty input:focus { box-shadow: none; }
+
+        .product .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .product .name { font: 600 1.02rem 'Nunito'; color: var(--coffee-900); }
+        .price { font: 700 1.05rem 'Nunito'; color: var(--coffee-800); }
+        .tag {
+            display: inline-block;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--coffee-700);
+            background: var(--cream-100);
+            padding: 3px 8px;
+            border-radius: 999px;
+            width: fit-content;
+        }
+
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: #fffbebe6;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--line-200);
+        }
+        .nav .inner { display: flex; align-items: center; gap: 20px; height: 64px; overflow-x: auto; }
+        .brand { font: 700 1.3rem 'Nunito'; color: var(--coffee-900); letter-spacing: -.04em; cursor: pointer; }
+        .brand span { color: var(--gold-500); }
+        .nav a.link { font: 600 .92rem 'Nunito'; color: var(--coffee-900); padding: 6px 4px; white-space: nowrap; flex-shrink: 0; cursor: pointer; }
+        .nav .brand, .nav .push { flex-shrink: 0; }
+        .nav a.link:hover, .nav a.link.active { color: var(--coffee-700); font-weight: 700; }
+        .nav .push { margin-left: auto; }
+        .badge { background: var(--coffee-800); color: #fff; border-radius: 999px; font-size: .72rem; padding: 1px 7px; margin-left: 4px; }
+
+        .hero { padding: 72px 0 40px; }
+        .hero h1 { font-size: clamp(2.6rem, 8vw, 4.5rem); font-weight: 800; line-height: 1.08; }
+        .hero p { font-size: 1.15rem; max-width: 60ch; color: var(--slate-600); margin-top: 14px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--line-200); font-size: .92rem; }
+        th { font: 600 .78rem 'Nunito'; text-transform: uppercase; letter-spacing: .05em; color: var(--slate-600); }
+        .section { padding: 40px 0; }
+        .pill { font: 600 .72rem 'Nunito'; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; flex-shrink: 0; }
+        .pill.open, .pill.pending { background: #fef3c7; color: #92400e; }
+        .pill.paid, .pill.approved, .pill.answered { background: #dcfce7; color: #15803d; }
+        .pill.cancelled, .pill.rejected, .pill.closed { background: #fee2e2; color: #b91c1c; }
+        .rev { border: 1px solid var(--line-200); border-radius: 10px; padding: 14px 16px; margin: 12px 0; background: var(--paper); }
+        .footer { border-top: 1px solid var(--line-200); padding: 32px 0; color: var(--slate-600); font-size: .9rem; margin-top: 48px; }
+
+        .profile-head { display: flex; align-items: center; gap: 18px; padding: 22px; }
+        .avatar {
+            flex: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            font: 700 1.5rem 'Nunito', sans-serif;
+            color: var(--coffee-900);
+            background: linear-gradient(135deg, var(--gold-400), var(--cream-100));
+            border: 1px solid var(--gold-500);
+        }
+        .profile-head .id h1 { margin: 0 0 2px; font-size: 1.5rem; }
+        .profile-head .id .email { color: var(--slate-600); font-size: .92rem; }
+        .profile-head .chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+        .code-console {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 14px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-top: 12px;
+            border: 1px solid var(--coffee-800);
+        }
+
+        .admin-tabs { display: flex; gap: 8px; border-bottom: 2px solid var(--line-200); margin-bottom: 24px; overflow-x: auto; }
+        .admin-tab { padding: 10px 16px; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .admin-tab.active { border-bottom-color: var(--coffee-800); color: var(--coffee-800); }
+
+        @media (max-width: 700px) {
+            .nav .inner { gap: 12px; overflow-x: auto; }
+            .hide-sm { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header class="nav">
+        <div class="container inner">
+            <a class="brand" onclick="navigate('home')">Brew<span>Cart</span></a>
+            <a class="link" id="nav-home" onclick="navigate('home')">Trang chủ</a>
+            <a class="link" id="nav-store" onclick="navigate('store')">Cửa hàng</a>
+            <a class="link hide-sm" id="nav-cart" onclick="navigate('cart')">Giỏ hàng <span class="badge" id="cartBadge">0</span></a>
+            <a class="link" id="nav-orders" onclick="navigate('orders')">Đơn hàng</a>
+            <a class="link hide-sm" id="nav-support" onclick="navigate('support')">Hỗ trợ</a>
+            <a class="link" id="nav-admin" onclick="navigate('admin')" style="display:none; color:var(--danger); font-weight:700;">⚙️ Quản trị</a>
+            <div class="push row" id="authNavArea"></div>
+        </div>
+    </header>
+
+    <main class="container" id="appRoot" style="min-height: 70vh; padding-top: 24px; padding-bottom: 24px;"></main>
+
+    <footer class="footer">
+        <div class="container spread">
+            <span>© 2026 BrewCart — Cà phê rang mộc, giao trong 24 giờ.</span>
+            <span class="small muted">Môi trường thực hành bảo mật ứng dụng Web E-Commerce</span>
+        </div>
+    </footer>
+
+    <script>
+        let currentView = 'home';
+        let currentUser = null;
+        let cart = [];
+        let allProducts = [];
+        let currentProductSlug = 'americano';
+        let adminTab = 'reviews';
+        let authMode = 'login';
+
+        window.onload = async function() {
+            await checkUser();
+            await fetchProducts();
+            renderView();
+        };
+
+        async function checkUser() {
+            try {
+                const res = await fetch('/api/member/me');
+                const data = await res.json();
+                if (data.loggedIn) {
+                    currentUser = data.user;
+                } else {
+                    currentUser = null;
+                }
+            } catch(e) {
+                currentUser = null;
+            }
+            updateNav();
+        }
+
+        function updateNav() {
+            const area = document.getElementById('authNavArea');
+            const adminNav = document.getElementById('nav-admin');
+
+            if (currentUser) {
+                area.innerHTML = 
+                    '<span class="small muted">' + currentUser.name + '</span>' +
+                    '<a class="link" onclick="navigate(\'profile\')">Tài khoản</a>' +
+                    '<button class="btn ghost sm" onclick="logout()">Đăng xuất</button>';
+
+                if (currentUser.role === 'admin') {
+                    adminNav.style.display = 'inline-block';
+                } else {
+                    adminNav.style.display = 'none';
+                }
+            } else {
+                area.innerHTML = '<a class="btn cta sm" onclick="navigate(\'login\')">Đăng nhập</a>';
+                adminNav.style.display = 'none';
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            await checkUser();
+            navigate('home');
+        }
+
+        async function fetchProducts() {
+            try {
+                const res = await fetch('/api/store/products');
+                allProducts = await res.json();
+            } catch(e) {
+                allProducts = [];
+            }
+        }
+
+        function navigate(view, param) {
+            currentView = view;
+            if (param) currentProductSlug = param;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            document.querySelectorAll('.nav .link').forEach(el => el.classList.remove('active'));
+            const activeNav = document.getElementById('nav-' + view);
+            if (activeNav) activeNav.classList.add('active');
+
+            renderView();
+        }
+
+        function renderView() {
+            const root = document.getElementById('appRoot');
+            if (currentView === 'home') renderHome(root);
+            else if (currentView === 'store') renderStore(root);
+            else if (currentView === 'product') renderProductDetail(root);
+            else if (currentView === 'cart') renderCart(root);
+            else if (currentView === 'orders') renderOrders(root);
+            else if (currentView === 'support') renderSupport(root);
+            else if (currentView === 'profile') renderProfile(root);
+            else if (currentView === 'login') renderLogin(root);
+            else if (currentView === 'admin') renderAdmin(root);
+        }
+
+        // 1. Home
+        function renderHome(root) {
+            root.innerHTML = 
+                '<section class="hero">' +
+                    '<h1>Cà phê rang mộc,<br>pha là thấy nhớ.</h1>' +
+                    '<p>Hạt cà phê đặc sản rang theo mẻ nhỏ, giao tận nơi trong 24 giờ. Miễn phí ship cho đơn từ 400.000₫.</p>' +
+                    '<div class="row" style="margin-top: 20px; flex-wrap: wrap;">' +
+                        '<a class="btn cta" onclick="navigate(\'store\')">Mua ngay</a>' +
+                        '<a class="btn ghost" onclick="navigate(\'store\')">Xem thực đơn</a>' +
+                    '</div>' +
+                '</section>' +
+                '<section class="section">' +
+                    '<div class="spread" style="margin-bottom: 20px;">' +
+                        '<h2>Sản phẩm nổi bật</h2>' +
+                        '<a class="small" onclick="navigate(\'store\')">Xem tất cả →</a>' +
+                    '</div>' +
+                    '<div class="grid">' +
+                        allProducts.slice(0, 4).map(p => productCardHtml(p)).join('') +
+                    '</div>' +
+                '</section>';
+        }
+
+        // 2. Store (Reflected XSS #28)
+        function renderStore(root) {
+            root.innerHTML = 
+                '<section class="section">' +
+                    '<h1>Tất cả sản phẩm</h1>' +
+                    '<div class="card pad" style="margin-bottom: 22px;">' +
+                        '<form class="row" style="gap: 10px;" onsubmit="event.preventDefault(); filterProducts();">' +
+                            '<input id="storeSearchInput" placeholder="Tìm cà phê, dụng cụ…" style="flex: 1 1 auto; min-width: 0px;">' +
+                            '<button class="btn" style="flex-shrink: 0;" type="submit">Tìm kiếm</button>' +
+                        '</form>' +
+                        '<div id="searchNoticeArea" style="margin-top: 10px;"></div>' +
+                        '<div class="row" style="gap: 10px; margin-top: 12px; flex-wrap: wrap;">' +
+                            '<select id="categorySelect" style="width: auto;" onchange="filterProducts()">' +
+                                '<option value="">Tất cả danh mục</option>' +
+                                '<option value="ca-phe-hat">Cà phê hạt</option>' +
+                                '<option value="ca-phe-y">Cà phê Ý</option>' +
+                            '</select>' +
+                            '<select id="sortSelect" style="width: auto;" onchange="filterProducts()">' +
+                                '<option value="newest">Mới nhất</option>' +
+                                '<option value="price_asc">Giá tăng dần</option>' +
+                                '<option value="price_desc">Giá giảm dần</option>' +
+                                '<option value="name">Tên A→Z</option>' +
+                            '</select>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="grid" id="storeProductGrid">' +
+                        allProducts.map(p => productCardHtml(p)).join('') +
+                    '</div>' +
+                '</section>';
+        }
+
+        function filterProducts() {
+            const search = (document.getElementById('storeSearchInput').value || '').trim();
+            const noticeArea = document.getElementById('searchNoticeArea');
+
+            // Reflected XSS #28: render directly via innerHTML
+            if (search) {
+                noticeArea.innerHTML = '<p class="small muted">Kết quả tìm kiếm cho: <strong>' + search + '</strong></p>';
+            } else {
+                noticeArea.innerHTML = '';
+            }
+
+            const cat = document.getElementById('categorySelect').value;
+            const sort = document.getElementById('sortSelect').value;
+
+            let filtered = allProducts.filter(p => {
+                const matchName = p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
+                const matchCat = cat ? p.category_slug === cat : true;
+                return matchName && matchCat;
+            });
+
+            if (sort === 'price_asc') filtered.sort((a,b) => a.price - b.price);
+            else if (sort === 'price_desc') filtered.sort((a,b) => b.price - a.price);
+            else if (sort === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
+
+            document.getElementById('storeProductGrid').innerHTML = filtered.map(p => productCardHtml(p)).join('');
+        }
+
+        function productCardHtml(p) {
+            return (
+                '<div class="card product" onclick="navigate(\'product\', \'' + p.slug + '\')">' +
+                    '<div class="thumb">' +
+                        '<img src="' + p.image_url + '" alt="' + p.name + '">' +
+                    '</div>' +
+                    '<div class="body">' +
+                        '<span class="tag">' + (p.roast_label || p.roast) + '</span>' +
+                        '<span class="name">' + p.name + '</span>' +
+                        '<span class="price">' + Number(p.price).toLocaleString('vi-VN') + '₫</span>' +
+                    '</div>' +
+                '</div>'
+            );
+        }
+
+        // 3. Product detail (Stored XSS & Review Moderation Flow)
+        async function renderProductDetail(root) {
+            const p = allProducts.find(x => x.slug === currentProductSlug) || allProducts[0];
+            if (!p) return;
+
+            const revRes = await fetch('/api/store/reviews');
+            const allReviews = await revRes.json();
+            const reviews = allReviews.filter(r => r.product_slug === p.slug || !r.product_slug);
+
+            let reviewsHtml = reviews.length ? reviews.map(r => {
+                return (
+                    '<div class="rev">' +
+                        '<div class="spread"><b>' + r.author_name + '</b><span class="muted small">' + '★'.repeat(r.rating) + ' · Đã kiểm duyệt</span></div>' +
+                        '<div style="margin-top: 6px;">' + r.body + '</div>' +
+                    '</div>'
+                );
+            }).join('') : '<p class="muted">Chưa có đánh giá nào được duyệt cho sản phẩm này.</p>';
+
+            root.innerHTML = 
+                '<section class="section">' +
+                    '<a class="small" onclick="navigate(\'store\')">← Cửa hàng</a>' +
+                    '<div class="prod-grid">' +
+                        '<div class="card thumb" style="aspect-ratio: 1 / 1; font-size: 4rem;">' +
+                            '<img src="' + p.image_url + '" alt="' + p.name + '">' +
+                        '</div>' +
+                        '<div>' +
+                            '<span class="tag">' + (p.roast_label || p.roast) + '</span>' +
+                            '<h1 style="margin-top: 8px;">' + p.name + '</h1>' +
+                            '<p class="price" style="font-size: 1.6rem;">' + Number(p.price).toLocaleString('vi-VN') + '₫</p>' +
+                            '<p class="muted">' + p.description + '</p>' +
+                            '<p class="small muted">Danh mục: ' + (p.category || 'Cà phê') + ' · Còn ' + p.stock + ' sản phẩm</p>' +
+                            '<div class="row" style="gap: 12px; margin: 14px 0px; flex-wrap: wrap;">' +
+                                '<div class="qty">' +
+                                    '<button type="button" aria-label="Giảm" onclick="adjustQty(-1)">−</button>' +
+                                    '<input type="number" id="detailQty" min="1" max="60" value="1">' +
+                                    '<button type="button" aria-label="Tăng" onclick="adjustQty(1)">+</button>' +
+                                '</div>' +
+                                '<button class="btn cta" onclick="addToCart(' + p.id + ')">Thêm vào giỏ</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div style="margin-top: 40px;">' +
+                        '<h2>Đánh giá từ khách hàng</h2>' +
+                        reviewsHtml +
+                        '<form class="card pad" style="margin-top: 20px;" onsubmit="event.preventDefault(); submitReview(\'' + p.slug + '\');">' +
+                            '<h3>Viết đánh giá sản phẩm</h3>' +
+                            '<p class="small muted">Lưu ý: Mọi đánh giá sẽ được gửi vào hàng đợi duyệt của Quản trị viên trước khi hiển thị công khai.</p>' +
+                            '<div class="field">' +
+                                '<label>Số sao</label>' +
+                                '<select id="revRating" style="width: auto;">' +
+                                    '<option value="5">5 sao</option>' +
+                                    '<option value="4">4 sao</option>' +
+                                    '<option value="3">3 sao</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="field">' +
+                                '<label>Nội dung nhận xét</label>' +
+                                '<textarea id="revBody" placeholder="Nhập cảm nhận của bạn về sản phẩm..." required></textarea>' +
+                            '</div>' +
+                            '<button class="btn" type="submit" id="btnSubmitReview">Gửi đánh giá</button>' +
+                        '</form>' +
+                    '</div>' +
+                '</section>';
+        }
+
+        function adjustQty(amount) {
+            const el = document.getElementById('detailQty');
+            let val = parseInt(el.value) || 1;
+            val = Math.max(1, val + amount);
+            el.value = val;
+        }
+
+        function addToCart(productId) {
+            const p = allProducts.find(x => x.id === productId);
+            const qty = parseInt(document.getElementById('detailQty').value) || 1;
+            const existing = cart.find(x => x.product.id === productId);
+            if (existing) existing.qty += qty;
+            else cart.push({ product: p, qty: qty });
+
+            document.getElementById('cartBadge').textContent = cart.reduce((acc, x) => acc + x.qty, 0);
+            alert('Đã thêm vào giỏ hàng!');
+        }
+
+        async function submitReview(slug) {
+            const rating = document.getElementById('revRating').value;
+            const body = document.getElementById('revBody').value.trim();
+            const btn = document.getElementById('btnSubmitReview');
+
+            btn.disabled = true;
+            btn.textContent = 'Đang gửi...';
+
+            try {
+                const res = await fetch('/api/store/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_slug: slug, rating, body })
+                });
+
+                const data = await res.json();
+                alert(data.message || 'Đánh giá đã được gửi và đang chờ Quản trị viên phê duyệt!');
+                document.getElementById('revBody').value = '';
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Gửi đánh giá';
+            }
+        }
+
+        // 4. Cart
+        function renderCart(root) {
+            if (!cart.length) {
+                root.innerHTML = 
+                    '<section class="section">' +
+                        '<h1>Giỏ hàng</h1>' +
+                        '<div class="card pad" style="text-align:center; padding: 40px 20px;">' +
+                            '<p class="muted">Giỏ hàng của bạn đang trống.</p>' +
+                            '<a class="btn cta" onclick="navigate(\'store\')" style="margin-top:14px;">Mua sắm ngay</a>' +
+                        '</div>' +
+                    '</section>';
+                return;
+            }
+
+            let total = cart.reduce((acc, item) => acc + (item.product.price * item.qty), 0);
+
+            root.innerHTML = 
+                '<section class="section">' +
+                    '<h1>Giỏ hàng</h1>' +
+                    '<div class="card pad">' +
+                        '<table>' +
+                            '<thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th><th></th></tr></thead>' +
+                            '<tbody>' +
+                                cart.map((item, idx) => 
+                                    '<tr>' +
+                                        '<td>' + item.product.name + '</td>' +
+                                        '<td>' + Number(item.product.price).toLocaleString('vi-VN') + '₫</td>' +
+                                        '<td>' + item.qty + '</td>' +
+                                        '<td>' + (item.product.price * item.qty).toLocaleString('vi-VN') + '₫</td>' +
+                                        '<td><button class="btn danger sm" onclick="removeFromCart(' + idx + ')">Xoá</button></td>' +
+                                    '</tr>'
+                                ).join('') +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                    '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:14px;">' +
+                        '<span class="price" style="font-size: 1.3rem;">Tạm tính: ' + total.toLocaleString('vi-VN') + '₫</span>' +
+                        '<button class="btn cta" onclick="checkoutCart()">Đặt hàng</button>' +
+                    '</div>' +
+                '</section>';
+        }
+
+        async function checkoutCart() {
+            if (!currentUser) {
+                alert('Vui lòng đăng nhập trước khi tiến hành đặt hàng!');
+                navigate('login');
+                return;
+            }
+            if (!cart.length) return;
+
+            let total = cart.reduce((acc, item) => acc + (item.product.price * item.qty), 0);
+            const orderItems = cart.map(i => ({
+                id: i.product.id,
+                name: i.product.name,
+                price: i.product.price,
+                qty: i.qty
+            }));
+
+            try {
+                const res = await fetch('/api/member/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: orderItems,
+                        total_amount: total,
+                        notes: 'Đơn hàng trực tuyến bởi ' + currentUser.name
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Đặt hàng thành công! Mã đơn hàng: #' + data.orderId);
+                    cart = [];
+                    document.getElementById('cartBadge').textContent = '0';
+                    navigate('orders');
+                } else {
+                    alert('Lỗi đặt hàng: ' + (data.error || 'Thất bại'));
+                }
+            } catch(e) {
+                alert('Lỗi kết nối máy chủ: ' + e.message);
+            }
+        }
+
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            document.getElementById('cartBadge').textContent = cart.reduce((acc, x) => acc + x.qty, 0);
+            renderCart(document.getElementById('appRoot'));
+        }
+
+        // 5. Orders (IDOR #10, #16)
+        async function renderOrders(root) {
+            if (!currentUser) {
+                root.innerHTML = 
+                    '<section class="section" style="max-width: 800px; margin: 40px auto; text-align: center;">' +
+                        '<div class="card pad" style="padding: 40px 20px;">' +
+                            '<h2>Đăng nhập để xem đơn hàng</h2>' +
+                            '<p class="muted">Vui lòng đăng nhập tài khoản để quản lý đơn hàng của bạn.</p>' +
+                            '<button class="btn cta" onclick="navigate(\'login\')" style="margin-top: 14px;">Đăng nhập ngay</button>' +
+                        '</div>' +
+                    '</section>';
+                return;
+            }
+
+            let userOrders = [];
+            try {
+                const res = await fetch('/api/member/orders');
+                userOrders = await res.json();
+            } catch(e) {
+                userOrders = [];
+            }
+
+            let ordersHtml = '';
+            if (!userOrders || userOrders.length === 0) {
+                ordersHtml = 
+                    '<div class="card pad" style="text-align: center; padding: 40px 20px; margin-bottom: 24px;">' +
+                        '<div style="font-size: 3rem; margin-bottom: 8px;">📦</div>' +
+                        '<h3>Bạn chưa có đơn hàng nào</h3>' +
+                        '<p class="muted">Hãy lựa chọn các dòng cà phê yêu thích và đặt đơn hàng đầu tiên!</p>' +
+                        '<button class="btn cta" onclick="navigate(\'store\')" style="margin-top: 14px;">Khám phá cửa hàng</button>' +
+                    '</div>';
+            } else {
+                ordersHtml = 
+                    '<div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">' +
+                        userOrders.map(o => {
+                            let items = [];
+                            try { items = typeof o.items === 'string' ? JSON.parse(o.items) : o.items; } catch(e){}
+                            return (
+                                '<div class="card pad">' +
+                                    '<div class="spread">' +
+                                        '<div>' +
+                                            '<h3>Đơn hàng #' + o.id + '</h3>' +
+                                            '<span class="small muted">Ngày đặt: ' + new Date(o.created_at).toLocaleString('vi-VN') + '</span>' +
+                                        '</div>' +
+                                        '<span class="pill ' + (o.status === 'completed' ? 'approved' : 'pending') + '">' + o.status + '</span>' +
+                                    '</div>' +
+                                    '<table style="margin-top: 12px;">' +
+                                        '<thead><tr><th>Mặt hàng</th><th>Đơn giá</th><th>SL</th></tr></thead>' +
+                                        '<tbody>' +
+                                            (items || []).map(i => '<tr><td>' + i.name + '</td><td>' + Number(i.price).toLocaleString('vi-VN') + '₫</td><td>' + i.qty + '</td></tr>').join('') +
+                                        '</tbody>' +
+                                    '</table>' +
+                                    '<div class="spread" style="margin-top: 12px; align-items: center;">' +
+                                        '<a href="/api/member/orders/' + o.id + '/invoice" target="_blank" class="small" style="font-weight:700;">📄 Xem hoá đơn điện tử</a>' +
+                                        '<b class="price" style="font-size: 1.15rem;">Tổng tiền: ' + Number(o.total_amount).toLocaleString('vi-VN') + '₫</b>' +
+                                    '</div>' +
+                                '</div>'
+                            );
+                        }).join('') +
+                    '</div>';
+            }
+
+            root.innerHTML = 
+                '<section class="section" style="max-width: 800px; margin: 0 auto;">' +
+                    '<div class="spread" style="margin-bottom: 20px;">' +
+                        '<h1>Đơn hàng của bạn</h1>' +
+                        '<span class="small muted">Tài khoản: ' + currentUser.name + '</span>' +
+                    '</div>' +
+                    ordersHtml +
+                    '<div class="card pad" style="background: var(--cream-50, #fafafa); border: 1px dashed var(--line-200, #ccc);">' +
+                        '<h4 style="margin-top: 0;">🔍 Tra cứu &amp; Kiểm tra đơn hàng theo mã</h4>' +
+                        '<p class="small muted">Hệ thống tra cứu chi tiết đơn hàng trực tiếp bằng Order ID (Endpoint: <code>/api/member/orders/:id</code>).' +
+                        '</p>' +
+                        '<div class="row" style="gap: 10px; margin-top: 10px; flex-wrap: wrap;">' +
+                            '<input type="number" id="lookupOrderId" placeholder="Nhập mã đơn (VD: 10 hoặc 11)" style="max-width: 220px;" value="10">' +
+                            '<button class="btn" type="button" onclick="loadOrderDetail(document.getElementById(\'lookupOrderId\').value)">Xem thông tin đơn</button>' +
+                            '<a id="lookupInvoiceBtn" class="btn ghost" href="/api/member/orders/10/invoice" target="_blank">Xem hoá đơn #10</a>' +
+                        '</div>' +
+                        '<div id="orderDetailContainer" style="margin-top: 16px;"></div>' +
+                    '</div>' +
+                '</section>';
+        }
+
+        async function loadOrderDetail(orderId) {
+            const container = document.getElementById('orderDetailContainer');
+            const invoiceBtn = document.getElementById('lookupInvoiceBtn');
+            if (invoiceBtn) invoiceBtn.href = '/api/member/orders/' + orderId + '/invoice';
+            if (!container) return;
+            try {
+                const res = await fetch('/api/member/orders/' + orderId);
+                if (!res.ok) {
+                    container.innerHTML = '<div style="padding: 10px; background: #fff1f0; border-radius: 6px; color: #cf1322;">Không tìm thấy đơn hàng #' + orderId + '</div>';
+                    return;
+                }
+                const order = await res.json();
+                let items = [];
+                try { items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items; } catch(e){}
+
+                container.innerHTML = 
+                    '<div style="padding: 14px; background: #fff; border: 1px solid var(--line-200); border-radius: 8px;">' +
+                        '<div class="spread">' +
+                            '<h4>Chi tiết đơn hàng #' + order.id + ' — Khách hàng: ' + order.customer_name + '</h4>' +
+                            '<span class="pill ' + (order.status === 'completed' ? 'approved' : 'pending') + '">' + order.status + '</span>' +
+                        '</div>' +
+                        '<table style="margin-top: 10px;">' +
+                            '<thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>SL</th></tr></thead>' +
+                            '<tbody>' +
+                                (items || []).map(i => '<tr><td>' + i.name + '</td><td>' + Number(i.price).toLocaleString('vi-VN') + '₫</td><td>' + i.qty + '</td></tr>').join('') +
+                            '</tbody>' +
+                        '</table>' +
+                        '<div class="spread" style="margin-top: 10px;">' +
+                            '<span class="muted small">Ngày tạo: ' + new Date(order.created_at).toLocaleString('vi-VN') + '</span>' +
+                            '<b class="price" style="font-size: 1.1rem;">Tổng: ' + Number(order.total_amount).toLocaleString('vi-VN') + '₫</b>' +
+                        '</div>' +
+                        (order.notes ? '<div style="margin-top: 10px; padding: 10px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; font-size: 0.88rem; color: #d46b08;"><strong>Ghi chú nội bộ đơn hàng:</strong> ' + order.notes + '</div>' : '') +
+                    '</div>';
+            } catch(e) {
+                container.innerHTML = '<div style="padding: 10px; color: red;">Lỗi tải đơn hàng: ' + e.message + '</div>';
+            }
+        }
+
+        // 6. Support (Stored XSS & Insecure File Upload #22, #44, #82)
+        async function renderSupport(root) {
+            let tickets = [];
+            try {
+                const res = await fetch('/api/member/support/tickets');
+                tickets = await res.json();
+            } catch(e) {
+                tickets = [];
+            }
+
+            let ticketsHtml = '';
+            if (!tickets || tickets.length === 0) {
+                ticketsHtml = 
+                    '<div class="card pad" style="text-align: center; padding: 30px 20px; margin-bottom: 20px;">' +
+                        '<div style="font-size: 2.5rem; margin-bottom: 8px;">🎫</div>' +
+                        '<p class="muted" style="margin: 0;">Bạn hiện chưa có phiếu hỗ trợ nào trong hệ thống.</p>' +
+                    '</div>';
+            } else {
+                ticketsHtml = tickets.map(t => 
+                    '<div class="card pad" style="margin-bottom: 16px;">' +
+                        '<div class="spread">' +
+                            '<h3>#' + t.id + ' ' + t.subject + '</h3>' +
+                            '<span class="pill ' + (t.status === 'open' ? 'pending' : 'approved') + '">' + t.status + '</span>' +
+                        '</div>' +
+                        '<p class="small muted">Email: ' + t.email + '</p>' +
+                        '<div style="margin: 8px 0;">' + t.body + '</div>' +
+                        (t.attachment_path ? '<div style="margin-top:8px;"><a href="' + t.attachment_path + '" target="_blank" class="small" style="font-weight:700;">📎 Xem tệp đính kèm: ' + t.attachment_path + '</a></div>' : '') +
+                    '</div>'
+                ).join('');
+            }
+
+            root.innerHTML = 
+                '<section class="section" style="max-width: 760px; margin: 0 auto;">' +
+                    '<h1>Hàng đợi hỗ trợ khách hàng</h1>' +
+                    '<p class="muted" style="margin-bottom: 20px;">Gửi phiếu hỗ trợ hoặc phản hồi khiếu nại tới ban quản trị.</p>' +
+                    ticketsHtml +
+                    '<form class="card pad" style="margin-top: 24px;" onsubmit="event.preventDefault(); submitTicket();">' +
+                        '<h3>Tạo phiếu hỗ trợ mới &amp; Đính kèm tệp</h3>' +
+                        '<div class="field">' +
+                            '<label>Chủ đề</label>' +
+                            '<input type="text" id="ticketSubject" placeholder="VD: Hỏi về đơn hàng hoặc giao hàng..." required>' +
+                        '</div>' +
+                        '<div class="field">' +
+                            '<label>Nội dung câu hỏi</label>' +
+                            '<textarea id="ticketBody" placeholder="Nhập chi tiết nội dung hỗ trợ..." required></textarea>' +
+                        '</div>' +
+                        '<div class="field">' +
+                            '<label>Tệp đính kèm (hỗ trợ .png, .jpg, .pdf, .html, .shtml, .svg...)</label>' +
+                            '<input type="file" id="ticketFileInput">' +
+                        '</div>' +
+                        '<button class="btn cta" type="submit" id="btnSubmitTicket">Gửi phiếu hỗ trợ</button>' +
+                    '</form>' +
+                '</section>';
+        }
+
+        async function submitTicket() {
+            const subject = document.getElementById('ticketSubject').value.trim();
+            const body = document.getElementById('ticketBody').value.trim();
+            const fileInput = document.getElementById('ticketFileInput');
+            const btn = document.getElementById('btnSubmitTicket');
+
+            btn.disabled = true;
+            btn.textContent = 'Đang xử lý...';
+
+            try {
+                const res = await fetch('/api/member/support/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, body })
+                });
+                const data = await res.json();
+
+                if (fileInput.files.length > 0 && data.ticketId) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+                    reader.onload = async function() {
+                        await fetch('/api/member/support/tickets/' + data.ticketId + '/attachments', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filename: file.name,
+                                content: reader.result
+                            })
+                        });
+                        alert('Đã gửi phiếu hỗ trợ và tệp đính kèm thành công!');
+                        renderSupport(document.getElementById('appRoot'));
+                    };
+                    reader.readAsText(file);
+                } else {
+                    alert('Đã gửi phiếu hỗ trợ thành công!');
+                    renderSupport(document.getElementById('appRoot'));
+                }
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Gửi phiếu hỗ trợ';
+            }
+        }
+
+        // 7. Profile (Mass Assignment #2, #15, #30 & SQLi #29, #57)
+        function renderProfile(root) {
+            if (!currentUser) {
+                navigate('login');
+                return;
+            }
+
+            root.innerHTML = 
+                '<section class="section" style="max-width: 800px; margin: 0 auto;">' +
+                    '<div class="card">' +
+                        '<div class="profile-head">' +
+                            '<div class="avatar">' + currentUser.name.charAt(0) + '</div>' +
+                            '<div class="id">' +
+                                '<h1>' + currentUser.name + '</h1>' +
+                                '<div class="email">' + currentUser.email + '</div>' +
+                            '</div>' +
+                            '<div class="chips">' +
+                                '<span class="pill ' + (currentUser.role === 'admin' ? 'cancelled' : 'approved') + '">' + currentUser.role + '</span>' +
+                                '<span class="pill pending">Điểm: ' + (currentUser.loyalty_points || 0) + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="card pad" style="border:none; border-top:1px solid var(--line-200); border-radius:0;">' +
+                            '<h3>Cập nhật thông tin cá nhân</h3>' +
+                            '<p class="small muted" style="margin-bottom: 14px;">' +
+                                'Endpoint: <code>PATCH /api/member/me</code>.' +
+                            '</p>' +
+                            '<form onsubmit="event.preventDefault(); updateProfile();">' +
+                                '<div class="field">' +
+                                    '<label>Họ và tên</label>' +
+                                    '<input type="text" id="profName" value="' + currentUser.name + '" required>' +
+                                '</div>' +
+                                '<div class="field">' +
+                                    '<label>Email</label>' +
+                                    '<input type="text" id="profEmail" value="' + currentUser.email + '" required>' +
+                                '</div>' +
+                                '<button class="btn cta" type="submit" id="btnSaveProfile">Lưu thay đổi</button>' +
+                            '</form>' +
+                        '</div>' +
+                    '</div>' +
+                '</section>';
+        }
+
+        async function updateProfile() {
+            const name = document.getElementById('profName').value.trim();
+            const email = document.getElementById('profEmail').value.trim();
+            const btn = document.getElementById('btnSaveProfile');
+
+            btn.disabled = true;
+            btn.textContent = 'Đang lưu...';
+
+            try {
+                const res = await fetch('/api/member/me', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Cập nhật thông tin thành công!');
+                    await checkUser();
+                    renderProfile(document.getElementById('appRoot'));
+                } else {
+                    alert(data.error || 'Cập nhật thất bại');
+                }
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Lưu thay đổi';
+            }
+        }
+
+        function switchAuthMode(mode) {
+            authMode = mode;
+            renderLogin(document.getElementById('appRoot'));
+        }
+
+        // 8. Login & Register
+        function renderLogin(root) {
+            if (authMode === 'register') {
+                root.innerHTML = 
+                    '<section class="section" style="max-width: 440px; margin: 40px auto;">' +
+                        '<div class="spread" style="margin-bottom: 16px; align-items: center;">' +
+                            '<h1 style="margin:0;">Đăng ký tài khoản</h1>' +
+                            '<a class="small" href="javascript:void(0)" onclick="switchAuthMode(\'login\')">← Đăng nhập</a>' +
+                        '</div>' +
+                        '<form class="card pad" onsubmit="event.preventDefault(); performRegister();">' +
+                            '<div class="field">' +
+                                '<label>Họ và tên</label>' +
+                                '<input type="text" id="regName" placeholder="Nguyễn Văn A" required>' +
+                            '</div>' +
+                            '<div class="field">' +
+                                '<label>Email</label>' +
+                                '<input type="email" id="regEmail" placeholder="user@gmail.com" required>' +
+                            '</div>' +
+                            '<div class="field">' +
+                                '<label>Mật khẩu</label>' +
+                                '<input type="password" id="regPassword" placeholder="••••••••" required>' +
+                            '</div>' +
+                            '<button class="btn cta" style="width: 100%;" type="submit" id="btnRegister">Đăng ký thành viên</button>' +
+                            '<div style="margin-top: 14px; text-align: center; font-size: 0.85rem;">' +
+                                'Đã có tài khoản? <a href="javascript:void(0)" onclick="switchAuthMode(\'login\')" style="font-weight: 600;">Đăng nhập ngay</a>' +
+                            '</div>' +
+                        '</form>' +
+                    '</section>';
+                return;
+            }
+
+            root.innerHTML = 
+                '<section class="section" style="max-width: 440px; margin: 40px auto;">' +
+                    '<div class="spread" style="margin-bottom: 16px; align-items: center;">' +
+                        '<h1 style="margin:0;">Đăng nhập</h1>' +
+                        '<a class="small" href="javascript:void(0)" onclick="switchAuthMode(\'register\')" style="font-weight: 600;">+ Đăng ký tài khoản</a>' +
+                    '</div>' +
+                    '<form class="card pad" onsubmit="event.preventDefault(); performLogin();">' +
+                        '<div class="field">' +
+                            '<label>Email</label>' +
+                            '<input type="email" id="loginEmail" placeholder="admin@gmail.com hoặc huy@gmail.com" required>' +
+                        '</div>' +
+                        '<div class="field">' +
+                            '<label>Mật khẩu</label>' +
+                            '<input type="password" id="loginPassword" placeholder="••••••••" required>' +
+                        '</div>' +
+                        '<button class="btn cta" style="width: 100%;" type="submit">Đăng nhập</button>' +
+                        '<div style="margin-top: 14px; text-align: center; font-size: 0.85rem;">' +
+                            'Chưa có tài khoản? <a href="javascript:void(0)" onclick="switchAuthMode(\'register\')" style="font-weight: 600;">Đăng ký miễn phí tại đây</a>' +
+                        '</div>' +
+                        '<div style="margin-top: 14px; font-size: 0.8rem; color: var(--slate-600); line-height: 1.5; border-top: 1px solid var(--line-200); padding-top: 12px;">' +
+                            '<strong>Tài khoản hệ thống:</strong><br>' +
+                            '• Quản trị viên: <code>admin@gmail.com</code> / <code>Admin123!</code><br>' +
+                            '• Khách hàng: <code>huy@gmail.com</code> / <code>user123</code><br>' +
+                            '• Kiểm thử: <code>test@test.com</code> / <code>test123</code>' +
+                        '</div>' +
+                    '</form>' +
+                '</section>';
+        }
+
+        async function performLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                await checkUser();
+                navigate(currentUser.role === 'admin' ? 'admin' : 'home');
+            } else {
+                alert(data.error || 'Đăng nhập không thành công');
+            }
+        }
+
+        async function performRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const btn = document.getElementById('btnRegister');
+
+            btn.disabled = true;
+            btn.textContent = 'Đang đăng ký...';
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Đăng ký tài khoản thành công! Chào mừng ' + name);
+                    await checkUser();
+                    navigate('orders');
+                } else {
+                    alert(data.error || 'Đăng ký thất bại');
+                }
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Đăng ký thành viên';
+            }
+        }
+
+        // 9. ADMIN PANEL (Quản Trị Hệ Thống Toàn Diện & Duyệt Đánh Giá)
+        async function renderAdmin(root) {
+            if (!currentUser || currentUser.role !== 'admin') {
+                root.innerHTML = '<section class="section"><h1>403 Forbidden</h1><p class="muted">Khu vực dành riêng cho Quản trị viên.</p></section>';
+                return;
+            }
+
+            root.innerHTML = 
+                '<section class="section">' +
+                    '<div class="spread" style="margin-bottom: 20px;">' +
+                        '<div>' +
+                            '<h1>Quản trị hệ thống BrewCart</h1>' +
+                            '<p class="muted">Hệ thống quản lý sản phẩm, đơn hàng, người dùng và duyệt nội dung đánh giá.</p>' +
+                        '</div>' +
+                        '<span class="pill cancelled">Admin Session Active</span>' +
+                    '</div>' +
+
+                    '<div class="admin-tabs">' +
+                        '<div class="admin-tab ' + (adminTab === 'reviews' ? 'active' : '') + '" onclick="switchAdminTab(\'reviews\')">⭐ Quản lý &amp; Duyệt Đánh giá</div>' +
+                        '<div class="admin-tab ' + (adminTab === 'ssrf' ? 'active' : '') + '" onclick="switchAdminTab(\'ssrf\')">🖼️ Nạp ảnh sản phẩm</div>' +
+                        '<div class="admin-tab ' + (adminTab === 'tickets' ? 'active' : '') + '" onclick="switchAdminTab(\'tickets\')">🎫 Hỗ trợ khách hàng</div>' +
+                        '<div class="admin-tab ' + (adminTab === 'customers' ? 'active' : '') + '" onclick="switchAdminTab(\'customers\')">👥 Quản lý người dùng</div>' +
+                        '<div class="admin-tab ' + (adminTab === 'csv' ? 'active' : '') + '" onclick="switchAdminTab(\'csv\')">📥 Nhập dữ liệu CSV</div>' +
+                    '</div>' +
+
+                    '<div id="adminTabContent"></div>' +
+                '</section>';
+
+            renderAdminTabContent();
+        }
+
+        function switchAdminTab(tab) {
+            adminTab = tab;
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+            renderAdminTabContent();
+        }
+
+        async function renderAdminTabContent() {
+            const container = document.getElementById('adminTabContent');
+            if (!container) return;
+
+            if (adminTab === 'reviews') {
+                const res = await fetch('/api/admin/reviews');
+                const revs = await res.json();
+                
+                // STORED XSS SINK: Render trực tiếp nội dung đánh giá bằng raw HTML
+                container.innerHTML = 
+                    '<div class="card pad">' +
+                        '<div class="spread">' +
+                            '<div>' +
+                                '<h3>Quản lý &amp; Phê duyệt đánh giá khách hàng</h3>' +
+                                '<p class="small muted">Admin xem xét và bấm "Duyệt" để đưa đánh giá lên trang sản phẩm hoặc "Từ chối" để ẩn.</p>' +
+                            '</div>' +
+                            '<button class="btn sm ghost" onclick="renderAdminTabContent()">🔄 Làm mới danh sách</button>' +
+                        '</div>' +
+                        '<div style="margin-top:16px;">' +
+                            (revs.length ? revs.map(r => 
+                                '<div class="card pad" style="margin-bottom:14px; border-left: 4px solid ' + (r.status === 'approved' ? '#15803d' : (r.status === 'rejected' ? '#b91c1c' : '#d97706')) + ';">' +
+                                    '<div class="spread">' +
+                                        '<div>' +
+                                            '<b>' + r.author_name + '</b> · <span>' + '★'.repeat(r.rating) + '</span> ' +
+                                            '<span class="small muted">cho sản phẩm <code>' + r.product_slug + '</code></span>' +
+                                        '</div>' +
+                                        '<div class="row">' +
+                                            '<span class="pill ' + (r.status === 'approved' ? 'approved' : (r.status === 'rejected' ? 'cancelled' : 'pending')) + '">' +
+                                                (r.status === 'approved' ? 'Đã duyệt' : (r.status === 'rejected' ? 'Từ chối' : 'Chờ duyệt')) +
+                                            '</span>' +
+                                            (r.status === 'pending' ? 
+                                                '<button class="btn sm cta" onclick="moderateReview(' + r.id + ', \'approve\')">✅ Duyệt</button>' +
+                                                '<button class="btn sm danger" onclick="moderateReview(' + r.id + ', \'reject\')">❌ Từ chối</button>'
+                                                : (r.status === 'approved' ? 
+                                                    '<button class="btn sm danger" onclick="moderateReview(' + r.id + ', \'reject\')">Ẩn bài</button>' :
+                                                    '<button class="btn sm ghost" onclick="moderateReview(' + r.id + ', \'approve\')">Duyệt lại</button>')
+                                            ) +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line-200);">' +
+                                        r.body +
+                                    '</div>' +
+                                '</div>'
+                            ).join('') : '<p class="muted">Hiện chưa có đánh giá nào trong hệ thống.</p>') +
+                        '</div>' +
+                    '</div>';
+            } else if (adminTab === 'ssrf') {
+                container.innerHTML = 
+                    '<div class="card pad" style="margin-bottom: 28px; border: 2px solid var(--coffee-700);">' +
+                        '<h3>🖼️ Cập nhật &amp; Nạp ảnh sản phẩm từ xa</h3>' +
+                        '<p class="small muted" style="margin-bottom: 14px;">' +
+                            'Tính năng cho phép Quản trị viên nạp ảnh sản phẩm từ URL đối tác hoặc máy chủ hình ảnh nội bộ (<code>POST /api/admin/products/:id/fetch-image</code>).' +
+                        '</p>' +
+                        '<form class="row" style="gap: 10px; flex-wrap: wrap;" onsubmit="event.preventDefault(); triggerFetchImage();">' +
+                            '<select id="fetchProductId" style="width: auto; min-width: 180px;">' +
+                                allProducts.map(p => '<option value="' + p.id + '">' + p.name + ' (#' + p.id + ')</option>').join('') +
+                            '</select>' +
+                            '<input type="text" id="fetchImageUrl" placeholder="Nhập URL ảnh (VD: http://ops-internal.:8081/env hoặc http://supplier-feed.:8082/internal/keys)" style="flex: 1 1 320px;" required>' +
+                            '<button class="btn cta" type="submit" id="btnFetchImage">Nạp &amp; Xem trước</button>' +
+                        '</form>' +
+                        '<div id="fetchResultArea" style="display:none; margin-top: 14px;">' +
+                            '<div class="spread">' +
+                                '<span style="font-weight:700; font-size:0.9rem;">Kết quả phản hồi từ máy chủ:</span>' +
+                                '<span class="pill" id="fetchStatusBadge">200 OK</span>' +
+                            '</div>' +
+                            '<div class="code-console" id="fetchConsoleOutput"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="card pad">' +
+                        '<h3>Danh sách sản phẩm trong kho</h3>' +
+                        '<table style="margin-top: 12px;">' +
+                            '<thead><tr><th>ID</th><th>Hình ảnh</th><th>Tên sản phẩm</th><th>Đơn giá</th><th>Tồn kho</th><th>Thao tác</th></tr></thead>' +
+                            '<tbody>' +
+                                allProducts.map(p => 
+                                    '<tr>' +
+                                        '<td>#' + p.id + '</td>' +
+                                        '<td><img src="' + p.image_url + '" style="width: 38px; height: 38px; border-radius: 6px; object-fit: cover;"></td>' +
+                                        '<td><strong>' + p.name + '</strong></td>' +
+                                        '<td>' + Number(p.price).toLocaleString('vi-VN') + '₫</td>' +
+                                        '<td>' + p.stock + '</td>' +
+                                        '<td><button class="btn ghost sm" onclick="selectProductForFetch(' + p.id + ')">Chọn nạp ảnh</button></td>' +
+                                    '</tr>'
+                                ).join('') +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>';
+            } else if (adminTab === 'tickets') {
+                const res = await fetch('/api/member/support/tickets');
+                const tickets = await res.json();
+                container.innerHTML = 
+                    '<div class="card pad">' +
+                        '<h3>Quản lý phiếu hỗ trợ &amp; Tệp đính kèm</h3>' +
+                        '<div style="margin-top:14px;">' +
+                            tickets.map(t => 
+                                '<div class="card pad" style="margin-bottom:12px;">' +
+                                    '<div class="spread"><h4>#' + t.id + ' ' + t.subject + '</h4><span class="pill ' + (t.status==='open'?'pending':'approved') + '">' + t.status + '</span></div>' +
+                                    '<p class="small muted">Từ: ' + t.email + '</p>' +
+                                    '<div style="margin:8px 0;">' + t.body + '</div>' +
+                                    (t.attachment_path ? '<a href="' + t.attachment_path + '" target="_blank" class="small" style="font-weight:700; color:var(--coffee-700);">📎 Tải/Xem tệp đính kèm: ' + t.attachment_path + '</a>' : '') +
+                                '</div>'
+                            ).join('') +
+                        '</div>' +
+                    '</div>';
+            } else if (adminTab === 'customers') {
+                const res = await fetch('/api/admin/customers');
+                const users = await res.json();
+                container.innerHTML = 
+                    '<div class="card pad">' +
+                        '<h3>Danh sách tài khoản người dùng</h3>' +
+                        '<p class="small muted">Quản trị viên theo dõi và quản lý thông tin các tài khoản trong hệ thống.</p>' +
+                        '<table style="margin-top:14px;">' +
+                            '<thead><tr><th>ID</th><th>Họ và tên</th><th>Email</th><th>Vai trò</th><th>Điểm thưởng</th></tr></thead>' +
+                            '<tbody>' +
+                                users.map(u => 
+                                    '<tr>' +
+                                        '<td>#' + u.id + '</td>' +
+                                        '<td><strong>' + u.name + '</strong></td>' +
+                                        '<td>' + u.email + '</td>' +
+                                        '<td><span class="pill ' + (u.role==='admin'?'cancelled':'approved') + '">' + u.role + '</span></td>' +
+                                        '<td>' + (u.loyalty_points || 0) + '</td>' +
+                                    '</tr>'
+                                ).join('') +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>';
+            } else if (adminTab === 'csv') {
+                container.innerHTML = 
+                    '<div class="card pad">' +
+                        '<h3>Nhập sản phẩm qua CSV</h3>' +
+                        '<p class="small muted">Cú pháp định dạng CSV: <code>TênSảnPhẩm,GiáTiền,CategoryID</code></p>' +
+                        '<form onsubmit="event.preventDefault(); submitCsvImport();">' +
+                            '<textarea id="csvDataInput" style="height:120px;" placeholder="CaPheKhuyenMai,-50000,1&#10;AmericanoMoi,45000,2"></textarea>' +
+                            '<button class="btn cta" style="margin-top:10px;" type="submit">Thực hiện nhập CSV</button>' +
+                        '</form>' +
+                    '</div>';
+            }
+        }
+
+        async function moderateReview(id, action) {
+            try {
+                const res = await fetch('/api/admin/reviews/' + id + '/' + action, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert(action === 'approve' ? 'Đã duyệt đánh giá thành công!' : 'Đã từ chối đánh giá!');
+                    renderAdminTabContent();
+                } else {
+                    alert('Thao tác thất bại: ' + (data.error || 'Lỗi'));
+                }
+            } catch(e) {
+                alert('Lỗi: ' + e.message);
+            }
+        }
+
+        function selectProductForFetch(id) {
+            switchAdminTab('ssrf');
+            setTimeout(() => {
+                const el = document.getElementById('fetchProductId');
+                if (el) el.value = id;
+                const urlEl = document.getElementById('fetchImageUrl');
+                if (urlEl) urlEl.focus();
+            }, 100);
+        }
+
+        async function triggerFetchImage() {
+            const id = document.getElementById('fetchProductId').value;
+            const url = document.getElementById('fetchImageUrl').value.trim();
+            const btn = document.getElementById('btnFetchImage');
+            const resultArea = document.getElementById('fetchResultArea');
+            const badge = document.getElementById('fetchStatusBadge');
+            const consoleOutput = document.getElementById('fetchConsoleOutput');
+
+            btn.disabled = true;
+            btn.textContent = 'Đang kết nối...';
+
+            try {
+                const res = await fetch('/api/admin/products/' + id + '/fetch-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await res.json();
+                resultArea.style.display = 'block';
+
+                if (res.status === 200) {
+                    badge.className = 'pill approved';
+                    badge.textContent = 'HTTP ' + data.status + ' (' + (data.content_type || 'text') + ')';
+                    consoleOutput.textContent = data.preview || JSON.stringify(data, null, 2);
+                } else if (res.status === 502) {
+                    badge.className = 'pill cancelled';
+                    badge.textContent = '502 Bad Gateway';
+                    consoleOutput.textContent = 'LỖI PHÒNG THỦ: ' + (data.detail || 'Chặn địa chỉ nội bộ');
+                } else {
+                    badge.className = 'pill pending';
+                    badge.textContent = 'HTTP ' + res.status;
+                    consoleOutput.textContent = JSON.stringify(data, null, 2);
+                }
+
+            } catch(e) {
+                resultArea.style.display = 'block';
+                badge.className = 'pill cancelled';
+                badge.textContent = 'Network Error';
+                consoleOutput.textContent = e.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Nạp & Xem trước';
+            }
+        }
+
+        async function submitCsvImport() {
+            const csvData = document.getElementById('csvDataInput').value.trim();
+            if (!csvData) return;
+
+            const res = await fetch('/api/admin/imports/csv', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ csvData })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Đã nhập thành công ' + data.count + ' sản phẩm!');
+                await fetchProducts();
+                renderAdminTabContent();
+            } else {
+                alert('Lỗi: ' + (data.error || 'Nhập CSV thất bại'));
+            }
+        }
+    </script>
+</body>
+</html>
