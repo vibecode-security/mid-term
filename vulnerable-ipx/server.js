@@ -600,23 +600,37 @@ app.post('/api/admin/imports/csv', async (req, res) => {
     }
 });
 
-// API Danh sách sản phẩm từ MySQL
+// ========================================================================================
+// 4. SQL INJECTION TRÊN BỘ LỌC DANH MỤC (Báo cáo #4, PortSwigger SQLi Lab)
+// Endpoint: GET /api/store/products?category=...
+// Lỗi: Tham số category nối chuỗi trực tiếp vào câu lệnh SQL -> Time-based Blind / UNION SQLi
+// ========================================================================================
 app.get('/api/store/products', async (req, res) => {
+    const { category } = req.query;
     try {
         const db = await getDb();
-        const [rows] = await db.query(
-            `SELECT p.*, c.name as category, c.slug as category_slug,
+        let query = `SELECT p.*, c.name as category, c.slug as category_slug,
              CASE p.roast 
                WHEN 'dark' THEN 'rang đậm' 
                WHEN 'medium' THEN 'rang vừa' 
                ELSE 'rang nhạt' 
              END as roast_label
              FROM products p 
-             JOIN categories c ON p.category_id = c.id
-             ORDER BY p.id ASC`
-        );
+             JOIN categories c ON p.category_id = c.id`;
+
+        // VULNERABLE: Ghép chuỗi trực tiếp từ user input (SQL Injection)
+        if (category) {
+            query += ` WHERE (c.slug = '${category}' OR p.category_id = '${category}')`;
+        }
+
+        query += ` ORDER BY p.id ASC`;
+        const [rows] = await db.query(query);
         if (rows.length > 0) return res.json(rows);
-    } catch(e) {}
+    } catch(e) {
+        if (category && (category.includes("'") || category.includes("--") || category.toLowerCase().includes("sleep"))) {
+            return res.status(500).json({ error: e.message });
+        }
+    }
     return res.json(FALLBACK_PRODUCTS);
 });
 
