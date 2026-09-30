@@ -187,15 +187,27 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
+// Middleware kiểm tra đăng nhập (được mô tả trong Chủ đề 1 của Báo cáo/Writeup)
+async function requireAuth(req, res, next) {
+    const cookies = parseCookies(req);
+    const user = await getUserByToken(cookies.session_token);
+    if (!user) {
+        return res.status(401).json({ error: 'Yêu cầu đăng nhập để truy cập tài nguyên' });
+    }
+    req.user = user;
+    next();
+}
+
 // ========================================================================================
-// 2. BROKEN ACCESS CONTROL: LỘ TOÀN BỘ EMAIL ADMIN & USERS (Báo cáo #3, #83)
-// Endpoint: GET /api/admin/customers
-// Lỗi: Không có middleware kiểm tra quyền Admin, bất kỳ ai cũng xem được danh sách người dùng!
+// CHỦ ĐỀ 1: ACCESS CONTROL - LỘ DANH SÁCH & MASS ASSIGNMENT LEO QUYỀN
+// Endpoint: GET /api/member/users & PATCH /api/member/profile
+// Lỗi 1: Chỉ kiểm tra requireAuth, không kiểm tra vai trò admin -> Lộ toàn bộ users!
+// Lỗi 2: Nhận toàn bộ trường từ req.body đưa vào SQL update -> Leo quyền admin (Mass Assignment)
 // ========================================================================================
-app.get(['/api/admin/customers', '/api/member/users', '/api/admin/users'], async (req, res) => {
+app.get(['/api/member/users', '/api/admin/customers', '/api/admin/users'], requireAuth, async (req, res) => {
     try {
         const db = await getDb();
-        const [rows] = await db.query('SELECT id, email, name, role, loyalty_points, created_at FROM users ORDER BY id ASC');
+        const [rows] = await db.query('SELECT id, name, email, role, loyalty_points, created_at FROM users ORDER BY id ASC');
         return res.json(rows);
     } catch(e) {
         return res.json(FALLBACK_USERS.map(u => ({
@@ -209,53 +221,36 @@ app.get(['/api/admin/customers', '/api/member/users', '/api/admin/users'], async
     }
 });
 
-// ========================================================================================
-// 3. MASS ASSIGNMENT & SQL INJECTION (Báo cáo #2, #15, #18, #29, #30, #57)
-// Endpoint: PATCH /api/member/me
-// Lỗi 1 (Mass Assignment): Tự do cập nhật trường "role" lên "admin", "loyalty_points", v.v.
-// Lỗi 2 (SQL Injection): Tham số 'email' được nối chuỗi trực tiếp vào câu lệnh SQL UPDATE!
-// ========================================================================================
-app.patch(['/api/member/me', '/api/member/profile'], async (req, res) => {
-    const cookies = parseCookies(req);
-    const user = await getUserByToken(cookies.session_token);
-    if (!user) {
-        return res.status(401).json({ error: 'Vui lòng đăng nhập để cập nhật thông tin' });
-    }
-
-    const { name, email, role, loyalty_points, is_vip } = req.body;
-
+app.patch(['/api/member/profile', '/api/member/me'], requireAuth, async (req, res) => {
     try {
         const db = await getDb();
-        
-        // VULNERABLE CODE: Nối chuỗi SQL thô trực tiếp từ input client (SQLi #29, #57)
-        const updateParts = [];
-        if (name !== undefined) {
-            updateParts.push(`name = '${name.replace(/'/g, "\\'")}'`);
-        }
-        if (email !== undefined) {
-            // Cố ý không escape để mô phỏng Time-based SQLi / Blind SQLi theo đúng writeup:
-            updateParts.push(`email = '${email}'`);
-        }
-        if (role !== undefined) {
-            // Mass Assignment leo quyền Admin (#2, #15, #30):
-            updateParts.push(`role = '${role.replace(/'/g, "\\'")}'`);
-        }
-        if (loyalty_points !== undefined) {
-            updateParts.push(`loyalty_points = ${Number(loyalty_points) || 0}`);
-        }
-        if (is_vip !== undefined) {
-            updateParts.push(`is_vip = ${Number(is_vip) || 0}`);
+        const user = req.user;
+        const fields = Object.keys(req.body);
+
+        if (fields.length > 0) {
+            // Cho phép cập nhật mọi trường (Mass Assignment) và nối chuỗi SQL (SQL Injection)
+            const updateParts = [];
+            for (const key of fields) {
+                const val = req.body[key];
+                if (key === 'email' && typeof val === 'string') {
+                    // Cố ý không escape để mô phỏng Time-based SQLi / Blind SQLi theo đúng test_lab.py:
+                    updateParts.push(`email = '${val}'`);
+                } else if (typeof val === 'number') {
+                    updateParts.push(`${key} = ${val}`);
+                } else {
+                    updateParts.push(`${key} = '${String(val).replace(/'/g, "\\'")}'`);
+                }
+            }
+
+            if (updateParts.length > 0) {
+                const rawSql = `UPDATE users SET ${updateParts.join(', ')} WHERE id = ${user.id}`;
+                console.log(`[SQL EXECUTE] ${rawSql}`);
+                await db.query(rawSql);
+            }
         }
 
-        if (updateParts.length > 0) {
-            const rawSql = `UPDATE users SET ${updateParts.join(', ')} WHERE id = ${user.id}`;
-            console.log(`[SQL EXECUTE] ${rawSql}`);
-            await db.query(rawSql);
-        }
-
-        // Lấy lại user mới nhất
         const [updatedRows] = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
-        return res.json({ success: true, user: updatedRows[0] });
+        return res.json({ success: true, user: updatedRows[0] || user });
 
     } catch(err) {
         console.error('[PROFILE UPDATE ERROR]', err);
@@ -264,7 +259,7 @@ app.patch(['/api/member/me', '/api/member/profile'], async (req, res) => {
 });
 
 // ========================================================================================
-// 4. IDOR TRUY CẬP ĐƠN HÀNG VÀ HOÁ ĐƠN (Báo cáo #10, #16)
+// CHỦ ĐỀ 2: INSECURE DIRECT OBJECT REFERENCES (IDOR ĐƠN HÀNG & HOÁ ĐƠN)
 // Endpoint: GET /api/member/orders/:id & GET /api/member/orders/:id/invoice
 // Lỗi: Không kiểm tra quyền sở hữu đơn hàng (Missing user_id ownership check)
 // ========================================================================================
@@ -353,7 +348,7 @@ app.get('/api/member/orders/:id/invoice', async (req, res) => {
 });
 
 // ========================================================================================
-// 5. STORED XSS & ADMIN DUYỆT ĐÁNH GIÁ (REVIEWS MODERATION) (Báo cáo #23, #87, #93)
+// CHỦ ĐỀ 6: CROSS-SITE SCRIPTING (STORED XSS VÀ ADMIN DUYỆT ĐÁNH GIÁ) (Báo cáo #23, #87, #93)
 // Endpoint: POST /api/member/products/:id/reviews & POST /api/store/reviews
 // Lỗi: Lưu thẳng dữ liệu HTML không sanitize, render trực tiếp trong trang Admin bằng innerHTML!
 // Khách gửi review -> Chờ admin duyệt (status='pending'). Admin duyệt -> Hiển thị công khai.
@@ -439,7 +434,7 @@ app.patch('/api/admin/reviews/:id', async (req, res) => {
 });
 
 // ========================================================================================
-// 6. INSECURE FILE UPLOAD & TICKET STORED XSS (Báo cáo #22, #32, #44, #77, #82)
+// CHỦ ĐỀ 5: FILE UPLOAD VULNERABILITIES (UNRESTRICTED FILE UPLOAD & STORED XSS) (Báo cáo #22, #32, #44, #77, #82)
 // Endpoint: POST /api/member/support/tickets & POST /api/member/support/tickets/:id/attachments
 // Lỗi: Cho phép upload file .shtml, .html, .svg chứa XSS payload và render unescaped!
 // ========================================================================================
@@ -510,8 +505,8 @@ app.post('/api/member/support/tickets/:id/attachments', async (req, res) => {
 });
 
 // ========================================================================================
-// 7. SSRF FETCH-IMAGE API VỚI TRAILING DOT BYPASS (Báo cáo #18, #88, #89)
-// Endpoint: POST /api/admin/products/:id/fetch-image
+// CHỦ ĐỀ 3: SERVER-SIDE REQUEST FORGERY (SSRF - TRAILING DOT BYPASS) (Báo cáo #18, #88, #89)
+// Endpoint: POST /api/admin/supplier-sync & POST /api/admin/products/:id/fetch-image
 // Lỗi: Blacklist chuỗi hostname bị bypass bằng 'ops-internal.' hoặc IPv6, nip.io!
 // ========================================================================================
 app.post(['/api/admin/products/:id/fetch-image', '/api/admin/supplier-sync'], async (req, res) => {
@@ -561,8 +556,9 @@ app.post(['/api/admin/products/:id/fetch-image', '/api/admin/supplier-sync'], as
 });
 
 // ========================================================================================
-// 8. CSV IMPORT VỚI GIÁ ÂM (Báo cáo #21)
+// CHỦ ĐỀ 7: BUSINESS LOGIC VULNERABILITIES (CSV IMPORT GIÁ ÂM) (Báo cáo #21)
 // Endpoint: POST /api/admin/imports/csv
+// Lỗi: Không kiểm tra ràng buộc giá > 0, cho phép nạp giá âm hoặc 0 phá vỡ logic tính tiền
 // ========================================================================================
 app.post('/api/admin/imports/csv', async (req, res) => {
     const cookies = parseCookies(req);
